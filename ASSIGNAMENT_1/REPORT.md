@@ -23,38 +23,6 @@ This report summarizes the results of running the PageRank algorithm with varyin
 
 ---
 
-## Convergence Visualization
-```mermaid
-graph TD
-    subgraph Damping_0_70["Damping Factor 0.70"]
-        A1["Iter 10: NEWMAN, M (0.0027993)"]
-        A2["Iter 20: NEWMAN, M (0.0027982)"]
-        A3["Iter 30: NEWMAN, M (0.0027981)"]
-        A4["Iter 40: NEWMAN, M (0.0027981)"]
-        A1 --> A2 --> A3 --> A4
-    end
-
-    subgraph Damping_0_85["Damping Factor 0.85"]
-        B1["Iter 10: NEWMAN, M (0.0031605)"]
-        B2["Iter 20: NEWMAN, M (0.0031455)"]
-        B3["Iter 30: NEWMAN, M (0.0031438)"]
-        B4["Iter 40: NEWMAN, M (0.0031436)"]
-        B1 --> B2 --> B3 --> B4
-    end
-
-    subgraph Damping_1_00["Damping Factor 1.00"]
-        C1["Iter 10: BARABASI, A (0.0034276)"]
-        C2["Iter 20: BARABASI, A (0.0034883)"]
-        C3["Iter 30: BARABASI, A (0.0035438)"]
-        C4["Iter 40: BARABASI, A (0.0035804)"]
-        C1 --> C2 --> C3 --> C4
-    end
-
-    Damping_0_70 --> Damping_0_85 --> Damping_1_00
-```
-
----
-
 ## Graphical Representation
 ![Top 1 Value Plot](top1_value_plot.png)
 
