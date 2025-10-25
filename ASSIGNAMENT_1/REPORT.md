@@ -43,3 +43,5 @@ graph TD
 
     Damping_0_70 --> Damping_0_85 --> Damping_1_00
 ```
+
+![Top 1 Value Plot](top1_value_plot.png)
