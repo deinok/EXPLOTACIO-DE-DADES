@@ -114,3 +114,10 @@ In LM Studio, we only need to modify the `mcp.json` file as follows:
 
 ## Video
 The video can be seen in [./recording.mp4](./recording.mp4)
+
+## Conclusions
+MCP provides a straightforward way to integrate LLMs into real applications, including legacy systems. It enables new interaction models that were previously impractical.
+
+A future extension is to enable voice-based interaction with the LLM. This would allow operators to perform quick, low-risk actions, such as opening or closing doors.
+
+Higher-risk operations, such as starting engines, must always require explicit supervisor approval.
