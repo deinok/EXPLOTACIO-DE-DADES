@@ -16,16 +16,22 @@ The subsystem that is most ready for LLM integration is the one that controls tr
 
 The goal is to allow an operator to easily grant temporary authorization to a vehicle, which in turn enables the gates to open automatically.
 
-Since the implementation involves proprietary code that cannot be shared, I will provide a `.patch` file containing the required changes. A video demonstrating the system in operation will also be included.
+Since the implementation involves proprietary code that cannot be shared, I will provide a `mcp.patch` file containing the required changes. A video demonstrating the system in operation will also be included.
 
 ### Implementation details
 In practice, this is straightforward: the system only needs to insert a new entry into the `VehiculosAutorizados` SQL table. Once this record exists, the next time a camera detects that license plate, the vehicle will be authorized automatically.
 
 ## Setting up the MCP
-As all the code of `Harinera LaMeta` must be .NET based we will extend the actual system.
-[https://devblogs.microsoft.com/dotnet/build-a-model-context-protocol-mcp-server-in-csharp/](https://devblogs.microsoft.com/dotnet/build-a-model-context-protocol-mcp-server-in-csharp/) gives us a good starting point on how to implement MCP.
+Since all the code at `Harinera LaMeta` must be .NET-based, we will extend the existing system rather than introduce a separate service.
 
-As we actualy use a framework called AspNetCore, we just need to create an MCP Tool, attach it to the MCP engine and expose that MCP engine via HTTP declaring the endpoint.
+The article at [https://devblogs.microsoft.com/dotnet/build-a-model-context-protocol-mcp-server-in-csharp/](https://devblogs.microsoft.com/dotnet/build-a-model-context-protocol-mcp-server-in-csharp/) provides a solid starting point for implementing MCP in C#.
+
+Because the system already uses `ASP.NET Core`, the required changes are minimal: we add the necessary dependency, define an MCP Tool, register it with the MCP engine, and expose that engine over HTTP by declaring the appropriate endpoint.
+
+```xml
+<PackageReference Include="ModelContextProtocol.AspNetCore" />
+```
+
 ```csharp
 using System;
 using System.ComponentModel;
@@ -95,3 +101,16 @@ endpointRouteBuilder.MapMcp("/mcp");
 ```
 
 ## Setting up the LM Studio
+In LM Studio, we only need to modify the `mcp.json` file as follows:
+```json
+{
+  "mcpServers": {
+    "remote": {
+      "url": "http://localhost:5600/mcp"
+    }
+  }
+}
+```
+
+## Video
+The video can be seen in [./recording.mp4](./recording.mp4)
