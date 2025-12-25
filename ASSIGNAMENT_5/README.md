@@ -8,3 +8,19 @@ This approach turned out to be a dead end. Although it initially seemed viable, 
 The abandoned approach is documented in `historico-transito-vehiculos.ipynb`. That notebook includes a method to download roughly 30 GB of correctly labeled license-plate images, split into training and test datasets.
 
 ## Second Aproach
+The second approach is to use an LLM to control specific parts of the factory. This will be implemented using:
+* MCP
+* LM Studio
+
+The subsystem that is most ready for LLM integration is the one that controls truck flow, internally known as `Transito`.
+
+The goal is to allow an operator to easily grant temporary authorization to a vehicle, which in turn enables the gates to open automatically.
+
+Since the implementation involves proprietary code that cannot be shared, I will provide a `.patch` file containing the required changes. A video demonstrating the system in operation will also be included.
+
+### Implementation details
+In practice, this is straightforward: the system only needs to insert a new entry into the `VehiculosAutorizados` SQL table. Once this record exists, the next time a camera detects that license plate, the vehicle will be authorized automatically.
+
+## Seting up the MCP
+As all the code of `Harinera LaMeta` must be .NET based we will extend the actual system.
+[https://devblogs.microsoft.com/dotnet/build-a-model-context-protocol-mcp-server-in-csharp/](https://devblogs.microsoft.com/dotnet/build-a-model-context-protocol-mcp-server-in-csharp/) gives us a good starting point on how to implement MCP
