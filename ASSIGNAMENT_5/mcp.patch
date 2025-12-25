@@ -1,0 +1,322 @@
+From dddab6f29030cd092df270bb65455f2138eb32d4 Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Wed, 24 Dec 2025 16:34:02 +0100
+Subject: [PATCH 1/8] .
+
+---
+ Directory.Packages.props                                       | 3 ++-
+ src/META.Web.LectorMatriculas/META.Web.LectorMatriculas.csproj | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Directory.Packages.props b/Directory.Packages.props
+index a898ba8..5ecbdf0 100644
+--- a/Directory.Packages.props
++++ b/Directory.Packages.props
+@@ -19,6 +19,7 @@
+     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+     <PackageVersion Include="Microsoft.Kiota.Bundle" Version="1.21.0" />
+     <PackageVersion Include="Microsoft.Web.LibraryManager.Build" Version="3.0.71" />
++    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="0.5.0-preview.1" />
+     <PackageVersion Include="NLog.Extensions.Logging" Version="5.3.14" />
+     <PackageVersion Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.377.22" />
+     <PackageVersion Include="SimpleLPR" Version="3.5.9" />
+@@ -26,4 +27,4 @@
+     <PackageVersion Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.0.1" />
+   </ItemGroup>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/META.Web.LectorMatriculas/META.Web.LectorMatriculas.csproj b/src/META.Web.LectorMatriculas/META.Web.LectorMatriculas.csproj
+index 408baba..e3b74e5 100644
+--- a/src/META.Web.LectorMatriculas/META.Web.LectorMatriculas.csproj
++++ b/src/META.Web.LectorMatriculas/META.Web.LectorMatriculas.csproj
+@@ -14,6 +14,7 @@
+ 		<PackageReference Include="Microsoft.Data.SqlClient" />
+ 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+ 		<PackageReference Include="Microsoft.Web.LibraryManager.Build" />
++		<PackageReference Include="ModelContextProtocol.AspNetCore" />
+ 		<PackageReference Include="Swashbuckle.AspNetCore" />
+ 	</ItemGroup>
+ 
+-- 
+2.52.0.windows.1
+
+
+From 306b20b500fc18ffc0f5e38c32c42bfcecd3f0cf Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Wed, 24 Dec 2025 16:35:03 +0100
+Subject: [PATCH 2/8] .
+
+---
+ src/META.Web.LectorMatriculas/Startup.cs | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/META.Web.LectorMatriculas/Startup.cs b/src/META.Web.LectorMatriculas/Startup.cs
+index 43a78d5..84b2d1b 100644
+--- a/src/META.Web.LectorMatriculas/Startup.cs
++++ b/src/META.Web.LectorMatriculas/Startup.cs
+@@ -50,6 +50,7 @@ public class Startup
+ 		applicationBuilder.UseEndpoints(endpointRouteBuilder =>
+ 		{
+ 			endpointRouteBuilder.MapControllers();
++			endpointRouteBuilder.MapMcp("/mcp");
+ 			endpointRouteBuilder.MapRazorComponents<Components.App>()
+ 				.AddInteractiveServerRenderMode()
+ 				.AddInteractiveWebAssemblyRenderMode()
+-- 
+2.52.0.windows.1
+
+
+From 174ee455a6291796e57b3693fc11e6ef38271d61 Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Wed, 24 Dec 2025 16:44:05 +0100
+Subject: [PATCH 3/8] .
+
+---
+ src/META.Web.LectorMatriculas/Startup.cs | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/META.Web.LectorMatriculas/Startup.cs b/src/META.Web.LectorMatriculas/Startup.cs
+index 84b2d1b..f88ae7f 100644
+--- a/src/META.Web.LectorMatriculas/Startup.cs
++++ b/src/META.Web.LectorMatriculas/Startup.cs
+@@ -83,6 +83,8 @@ public class Startup
+ 		serviceCollection.AddHttpContextAccessor();
+ 		serviceCollection.AddApplicationInsightsTelemetry();
+ 		serviceCollection.AddHttpClient<VehiculosAutorizadosController>();
++		serviceCollection.AddMcpServer()
++			.WithHttpTransport();
+ 		serviceCollection.AddSignalR(options =>
+ 		{
+ 			options.MaximumReceiveMessageSize = 5 * 1024 * 1024;
+-- 
+2.52.0.windows.1
+
+
+From 3bfa917fb6df222ac24e42deac9f6a0c189926d8 Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Wed, 24 Dec 2025 16:46:39 +0100
+Subject: [PATCH 4/8] .
+
+---
+ src/META.Web.LectorMatriculas/Startup.cs        |  4 +++-
+ src/META.Web.LectorMatriculas/Tools/EchoTool.cs | 16 ++++++++++++++++
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+ create mode 100644 src/META.Web.LectorMatriculas/Tools/EchoTool.cs
+
+diff --git a/src/META.Web.LectorMatriculas/Startup.cs b/src/META.Web.LectorMatriculas/Startup.cs
+index f88ae7f..882e1e4 100644
+--- a/src/META.Web.LectorMatriculas/Startup.cs
++++ b/src/META.Web.LectorMatriculas/Startup.cs
+@@ -3,6 +3,7 @@ using System.Threading.Tasks;
+ using META.Web.LectorMatriculas.Controllers.Api;
+ using META.Web.LectorMatriculas.Models;
+ using META.Web.LectorMatriculas.Services;
++using META.Web.LectorMatriculas.Tools;
+ using Microsoft.AspNetCore.Authentication.Cookies;
+ using Microsoft.AspNetCore.Builder;
+ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+@@ -84,7 +85,8 @@ public class Startup
+ 		serviceCollection.AddApplicationInsightsTelemetry();
+ 		serviceCollection.AddHttpClient<VehiculosAutorizadosController>();
+ 		serviceCollection.AddMcpServer()
+-			.WithHttpTransport();
++			.WithHttpTransport()
++			.WithTools<EchoTool>();
+ 		serviceCollection.AddSignalR(options =>
+ 		{
+ 			options.MaximumReceiveMessageSize = 5 * 1024 * 1024;
+diff --git a/src/META.Web.LectorMatriculas/Tools/EchoTool.cs b/src/META.Web.LectorMatriculas/Tools/EchoTool.cs
+new file mode 100644
+index 0000000..a947995
+--- /dev/null
++++ b/src/META.Web.LectorMatriculas/Tools/EchoTool.cs
+@@ -0,0 +1,16 @@
++using ModelContextProtocol.Server;
++using System.ComponentModel;
++
++namespace META.Web.LectorMatriculas.Tools;
++
++[McpServerToolType]
++public class EchoTool
++{
++
++	[McpServerTool, Description("Echoes the input back to the client.")]
++	public static string Echo(string message)
++	{
++		return "hello " + message;
++	}
++
++}
+-- 
+2.52.0.windows.1
+
+
+From d0b74049e1f90a15231c940db8c3d8e964356365 Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Thu, 25 Dec 2025 16:21:55 +0100
+Subject: [PATCH 5/8] .
+
+---
+ .../Tools/TransitoTool.cs                     | 55 +++++++++++++++++++
+ 1 file changed, 55 insertions(+)
+ create mode 100644 src/META.Web.LectorMatriculas/Tools/TransitoTool.cs
+
+diff --git a/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs b/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs
+new file mode 100644
+index 0000000..a1ea11a
+--- /dev/null
++++ b/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs
+@@ -0,0 +1,55 @@
++using System;
++using System.ComponentModel;
++using System.Threading.Tasks;
++using Dapper;
++using META.Web.LectorMatriculas.Models;
++using Microsoft.Data.SqlClient;
++using Microsoft.Extensions.Configuration;
++using ModelContextProtocol.Server;
++
++namespace META.Web.LectorMatriculas.Tools;
++
++[McpServerToolType]
++public class TransitoTool(IConfiguration configuration)
++{
++
++	private readonly IConfiguration configuration = configuration;
++
++	[Description("Authorizes a Vehicle")]
++	[McpServerTool]
++	public async Task AutorizeAsync([Description("The Plate of the Vehicle to Autorize")] string plate)
++	{
++		await using var sqlConnection = new SqlConnection(this.configuration.GetConnectionString("TransitoVehiculos"));
++
++		var vehiculoAutorizado = new VehiculosAutorizados
++		{
++			Conductor = "John Doe",
++			DNI = string.Empty,
++			FechaInicioVigencia = DateTime.Now,
++			FechaFinVigencia = DateTime.Now + TimeSpan.FromDays(1),
++			Matricula = plate,
++			VehiculoInterno = false
++		};
++		await sqlConnection.ExecuteAsync($@"
++			INSERT
++				[VehiculosAutorizados](
++					{nameof(VehiculosAutorizados.Conductor)},
++					{nameof(VehiculosAutorizados.DNI)},
++					{nameof(VehiculosAutorizados.FechaFinVigencia)},
++					{nameof(VehiculosAutorizados.FechaInicioVigencia)},
++					{nameof(VehiculosAutorizados.Matricula)},
++					{nameof(VehiculosAutorizados.VehiculoInterno)}
++				)
++			VALUES
++				(
++					@{nameof(VehiculosAutorizados.Conductor)},
++					@{nameof(VehiculosAutorizados.DNI)},
++					@{nameof(VehiculosAutorizados.FechaFinVigencia)},
++					@{nameof(VehiculosAutorizados.FechaInicioVigencia)},
++					@{nameof(VehiculosAutorizados.Matricula)},
++					@{nameof(VehiculosAutorizados.VehiculoInterno)}
++				);
++		", vehiculoAutorizado);
++	}
++
++}
+-- 
+2.52.0.windows.1
+
+
+From cd600de60c5ce19b34129af9be1d06f1ae08549c Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Thu, 25 Dec 2025 16:22:12 +0100
+Subject: [PATCH 6/8] .
+
+---
+ src/META.Web.LectorMatriculas/Tools/EchoTool.cs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/META.Web.LectorMatriculas/Tools/EchoTool.cs b/src/META.Web.LectorMatriculas/Tools/EchoTool.cs
+index a947995..e30d7ca 100644
+--- a/src/META.Web.LectorMatriculas/Tools/EchoTool.cs
++++ b/src/META.Web.LectorMatriculas/Tools/EchoTool.cs
+@@ -8,7 +8,7 @@ public class EchoTool
+ {
+ 
+ 	[McpServerTool, Description("Echoes the input back to the client.")]
+-	public static string Echo(string message)
++	public string Echo(string message)
+ 	{
+ 		return "hello " + message;
+ 	}
+-- 
+2.52.0.windows.1
+
+
+From afb1841f4e855ad78b9b8c1cd709964ceabd4a37 Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Thu, 25 Dec 2025 16:23:05 +0100
+Subject: [PATCH 7/8] .
+
+---
+ src/META.Web.LectorMatriculas/Startup.cs | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/META.Web.LectorMatriculas/Startup.cs b/src/META.Web.LectorMatriculas/Startup.cs
+index 882e1e4..46f8e00 100644
+--- a/src/META.Web.LectorMatriculas/Startup.cs
++++ b/src/META.Web.LectorMatriculas/Startup.cs
+@@ -86,7 +86,8 @@ public class Startup
+ 		serviceCollection.AddHttpClient<VehiculosAutorizadosController>();
+ 		serviceCollection.AddMcpServer()
+ 			.WithHttpTransport()
+-			.WithTools<EchoTool>();
++			.WithTools<EchoTool>()
++			.WithTools<TransitoTool>();
+ 		serviceCollection.AddSignalR(options =>
+ 		{
+ 			options.MaximumReceiveMessageSize = 5 * 1024 * 1024;
+-- 
+2.52.0.windows.1
+
+
+From 1bc3866226ec6515719bfd1c760755ae981724eb Mon Sep 17 00:00:00 2001
+From: Raul Hidalgo <deinok@deinok.com>
+Date: Thu, 25 Dec 2025 17:08:41 +0100
+Subject: [PATCH 8/8] .
+
+---
+ src/META.Web.LectorMatriculas/Tools/TransitoTool.cs        | 2 +-
+ src/META.Web.LectorMatriculas/appsettings.Development.json | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs b/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs
+index a1ea11a..1c89dec 100644
+--- a/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs
++++ b/src/META.Web.LectorMatriculas/Tools/TransitoTool.cs
+@@ -23,7 +23,7 @@ public class TransitoTool(IConfiguration configuration)
+ 
+ 		var vehiculoAutorizado = new VehiculosAutorizados
+ 		{
+-			Conductor = "John Doe",
++			Conductor = string.Empty,
+ 			DNI = string.Empty,
+ 			FechaInicioVigencia = DateTime.Now,
+ 			FechaFinVigencia = DateTime.Now + TimeSpan.FromDays(1),
+diff --git a/src/META.Web.LectorMatriculas/appsettings.Development.json b/src/META.Web.LectorMatriculas/appsettings.Development.json
+index 22b9bff..314f66d 100644
+--- a/src/META.Web.LectorMatriculas/appsettings.Development.json
++++ b/src/META.Web.LectorMatriculas/appsettings.Development.json
+@@ -4,7 +4,7 @@
+ 		"ConnectionString": "InstrumentationKey=0a8fb915-412a-40bd-bca4-558bee323756"
+ 	},
+ 	"ConnectionStrings": {
+-		"TransitoVehiculos": "Database=TransitoVehiculos_Desarrollo;Password=2807;Server=sqlhm.vall.lan;TrustServerCertificate=True;User Id=hm;"
++		"TransitoVehiculos": "Server=sqlhm.vall.lan;Initial Catalog=TransitoVehiculos_Desarrollo;Persist Security Info=False;User ID=automatahm;Password=zU1QosCkVxWRNtpTGQzl_.ibgdsfui;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
+ 	},
+ 	"Logging": {
+ 		"LogLevel": {
+-- 
+2.52.0.windows.1
+
